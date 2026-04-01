@@ -4,6 +4,12 @@ from django.db.models import F
 
 from .models import Account, Transaction, Transfer
 from .events import EventPublisher
+from .exceptions import (
+    InsufficientFundsError,
+    DuplicateIdempotencyKeyError,
+    CurrencyMismatchError,
+    SameAccountTransferError,
+)
 
 
 class TransactionService:
@@ -44,10 +50,8 @@ class TransactionService:
                     # Same request — return existing (idempotent)
                     return existing
                 else:
-                    # Different payload — conflict TODO
-                    raise Exception(
-                        "Idempotency key already used with different parameters."
-                    )
+                    # Different payload — conflict
+                    raise DuplicateIdempotencyKeyError()
 
         with db_transaction.atomic():
             # Lock the account row to prevent race conditions
@@ -59,7 +63,7 @@ class TransactionService:
 
             if type == Transaction.TransactionType.DEBIT:
                 if account.balance < amount:
-                    raise Exception( # TODO
+                    raise InsufficientFundsError(
                         f"Insufficient funds. Available: {account.balance}, "
                         f"Requested: {amount}"
                     )
@@ -112,9 +116,7 @@ class TransferService:
         """
 
         if str(from_account_id) == str(to_account_id):
-            raise Exception( # TODO
-                "Cannot transfer to the same account."
-            )
+            raise SameAccountTransferError()
 
         # Handle idempotency
         if external_idempotency_key:
@@ -130,9 +132,7 @@ class TransferService:
                 ):
                     return existing
                 else:
-                    raise Exception( # TODO
-                        "Idempotency key already used with different parameters."
-                    )
+                    raise DuplicateIdempotencyKeyError()
 
         with db_transaction.atomic():
             # Lock BOTH accounts — always in consistent order to prevent deadlocks
@@ -156,14 +156,14 @@ class TransferService:
 
             # Validate same currency
             if from_account.currency != to_account.currency:
-                raise Exception( # TODO
+                raise CurrencyMismatchError(
                     f"Cannot transfer between different currencies: "
                     f"{from_account.currency} → {to_account.currency}"
                 )
 
             # Validate sufficient funds
             if from_account.balance < amount:
-                raise Exception( # TODO
+                raise InsufficientFundsError(
                     f"Insufficient funds. Available: {from_account.balance}, "
                     f"Requested: {amount}"
                 )
