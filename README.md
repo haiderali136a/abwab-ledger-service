@@ -157,6 +157,17 @@ SQLite is used for simplicity. `select_for_update()` is used for row-level locki
 
 ---
 
+## Future Improvements
+
+- PostgreSQL for proper row-level locking under concurrent load
+- Cursor-based pagination for list endpoints
+- Celery + Redis for async event processing
+- API rate limiting
+- Idempotency key expiry (e.g., 24 hours)
+- Health check endpoint for container orchestration
+
+---
+
 ## Project Structure
 ```
 abwab-ledger-service/
