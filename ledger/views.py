@@ -1,6 +1,7 @@
 from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Account, Transaction
 from .serializers import (
@@ -11,6 +12,7 @@ from .serializers import (
     CreateTransferSerializer,
 )
 from .services import TransactionService, TransferService
+from .filters import AccountFilter
 
 
 class AccountListCreateView(generics.ListCreateAPIView):
@@ -20,6 +22,8 @@ class AccountListCreateView(generics.ListCreateAPIView):
     """
     queryset = Account.objects.all()
     serializer_class = AccountSerializer
+    filter_backends = [DjangoFilterBackend]
+    filterset_class = AccountFilter
 
 
 class AccountDetailView(generics.RetrieveAPIView):
