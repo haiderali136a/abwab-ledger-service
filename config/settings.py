@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_filters',
-    'ledger'
+    'ledger',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -115,8 +116,14 @@ REST_FRAMEWORK = {
 
     # Test requests default to JSON
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Abwab Ledger API',
+    'DESCRIPTION': 'Backend service for managing customer accounts and money movements.',
+    'VERSION': '1.0.0',
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
