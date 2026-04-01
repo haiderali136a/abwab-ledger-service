@@ -3,6 +3,7 @@ from django.db import transaction as db_transaction
 from django.db.models import F
 
 from .models import Account, Transaction, Transfer
+from .events import EventPublisher
 
 
 class TransactionService:
@@ -24,6 +25,7 @@ class TransactionService:
         - Validates sufficient funds for debits
         - Handles idempotency
         - Updates balance atomically
+        - Publishes event
         """
 
         # Handle idempotency
@@ -78,6 +80,9 @@ class TransactionService:
 
         # Refresh to get actual balance value (F() expression)
         account.refresh_from_db()
+
+        # Publish event (outside atomic block)
+        EventPublisher.publish_transaction_created(txn)
 
         return txn
 
@@ -196,5 +201,8 @@ class TransferService:
                 description=f"Transfer in: {description}",
                 transfer=transfer,
             )
+
+        # Publish event (outside atomic block)
+        EventPublisher.publish_transfer_created(transfer, debit_txn, credit_txn)
 
         return transfer
