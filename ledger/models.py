@@ -1,4 +1,6 @@
 import uuid
+from decimal import Decimal
+from django.core.validators import MinValueValidator
 from django.db import models
 
 class Account(models.Model):
@@ -8,7 +10,8 @@ class Account(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     currency = models.CharField(max_length=3, default='USD')
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'),
+                                  validators=[MinValueValidator(Decimal('0.00'))])
 
     def __str__(self):
         return f"{self.owner_name} ({self.currency}) - {self.balance}"
@@ -24,7 +27,7 @@ class Transaction(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='transactions')
     type = models.CharField(max_length=10, choices=TransactionType)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.CharField(max_length=255, blank=True)
     external_idempotency_key = models.CharField(max_length=255, blank=True, null=True, unique=True)
@@ -48,7 +51,7 @@ class Transfer(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     from_account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='outgoing_transfers')
     to_account = models.ForeignKey(Account, on_delete=models.PROTECT, related_name='incoming_transfers')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
     created_at = models.DateTimeField(auto_now_add=True)
     description = models.CharField(max_length=255, blank=True)
     external_idempotency_key = models.CharField(max_length=255, blank=True, null=True, unique=True)
